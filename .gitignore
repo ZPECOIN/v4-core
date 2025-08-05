@@ -7,3 +7,9 @@ typechain/
 foundry-out/
 .vscode/
 out/
+
+# Environment files (deployment config included for demo)
+.env
+.env.local
+.env.production
+.env.staging
