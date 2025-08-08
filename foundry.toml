@@ -3,8 +3,8 @@ optimizer_runs = 44444444
 via_ir = true
 ffi = true
 fs_permissions = [{ access = "read-write", path = ".forge-snapshots/"}, { access = "read", path = "./out"}, {access = "read", path = "./test/bin"}]
-solc = "0.8.26"
-evm_version = "cancun"
+solc = "0.8.24"
+evm_version = "shanghai"
 gas_limit = "300000000"
 bytecode_hash = "none"
 allow_internal_expect_revert = true
