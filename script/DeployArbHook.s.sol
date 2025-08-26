@@ -133,23 +133,42 @@ contract DeployArbHookWithMine is Script {
     /// @param targetFlags The target hook flags
     /// @return The salt that produces the correct address
     function _mineSalt(address deployer, uint160 targetFlags) internal pure returns (uint256) {
+        console.log("Starting salt mining...");
+        console.log("Deployer:", deployer);
+        console.log("Target flags:", targetFlags);
+        console.log("Target flags (hex):", vm.toString(abi.encodePacked(targetFlags)));
+        
+        // Pre-compute the contract creation code hash for efficiency
+        bytes32 contractHash = keccak256(abi.encodePacked(
+            type(ArbHookContract).creationCode,
+            abi.encode(POOL_MANAGER_MAINNET)
+        ));
+        
+        console.log("Contract creation code hash:", vm.toString(contractHash));
+        
         for (uint256 salt = 0; salt < 1000000; salt++) {
             address predicted = vm.computeCreate2Address(
                 bytes32(salt),
-                keccak256(abi.encodePacked(
-                    type(ArbHookContract).creationCode,
-                    abi.encode(POOL_MANAGER_MAINNET)
-                )),
+                contractHash,
                 deployer
             );
             
             uint160 flags = uint160(predicted) & Hooks.ALL_HOOK_MASK;
             if (flags == targetFlags) {
-                console.log("Found matching address:", predicted);
+                console.log("SUCCESS: Found matching address:", predicted);
+                console.log("Salt value:", salt);
+                console.log("Iterations required:", salt + 1);
+                console.log("Address flags:", flags);
                 return salt;
+            }
+            
+            // Log progress every 50,000 iterations
+            if (salt % 50000 == 0 && salt > 0) {
+                console.log("Checked", salt, "salts so far...");
             }
         }
         
+        console.log("FAILED: Could not find suitable salt within 1,000,000 iterations");
         revert("Could not find suitable salt");
     }
 }
