@@ -13,3 +13,5 @@ out/
 .env.local
 .env.production
 .env.staging
+*.tar.gz
+*.lock
