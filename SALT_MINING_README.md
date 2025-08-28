@@ -9,10 +9,12 @@ Uniswap V4 hooks require their deployed addresses to have specific flags set in 
 ## Key Files
 
 ### Core Implementation
-- **`script/DeployArbHook.s.sol`** - Complete deployment script with integrated salt mining
-- **`script/SaltMiner.sol`** - Standalone salt mining utility
-- **`src/arb-hook-contract.sol`** - Arbitrage hook contract implementation
-- **`test/SaltMinerTest.sol`** - Comprehensive test suite
+- **`script/DeployAsyncAdversarialHook.s.sol`** - Complete deployment script with integrated salt mining
+- **`script/SaltMiner.sol`** - Standalone salt mining utility (FIXED flag constants)
+- **`src/AsyncAdversarialHook.sol`** - AsyncAdversarialHook contract implementation
+- **`src/arb-hook-contract.sol`** - Original arbitrage hook contract implementation
+- **`test/AsyncAdversarialHookTest.sol`** - Comprehensive test suite for AsyncAdversarialHook
+- **`test/SaltMinerTest.sol`** - Comprehensive test suite for salt mining
 
 ### Demonstration
 - **`demo.sh`** - Complete demonstration script showing the process
@@ -169,17 +171,27 @@ For a typical deployment:
 ## Implementation Status
 
 ✅ **Completed:**
-- Salt mining algorithm implementation
-- Arbitrage hook contract with proper flags
+- Salt mining algorithm implementation  
+- AsyncAdversarialHook contract with proper flags
+- **CRITICAL FIX**: Corrected hook flag constants to match Hooks.sol
 - Comprehensive test suite
 - Deployment scripts with mining integration
+- Pool creation utilities
 - Documentation and examples
 - Demonstration tools
 
 ✅ **Verified:**
-- Hook flag calculations are correct
+- Hook flag calculations are correct (FIXED from previous bug)
 - CREATE2 address computation works properly
-- Salt mining finds valid addresses
+- Salt mining finds valid addresses with correct flags
 - Deployment process is functional
+- AsyncAdversarialHook implements proper adversarial patterns
 
-This implementation fully satisfies the requirements: "forge build, forge test, and mine salt" - providing a complete solution for Uniswap V4 hook deployment with salt mining capabilities.
+🔧 **Critical Bug Fixed:**
+The original implementation had incorrect flag constants in SaltMiner.sol:
+- ❌ **Previous**: `BEFORE_SWAP_FLAG = 1 << 8`, `AFTER_SWAP_FLAG = 1 << 7`
+- ✅ **Fixed**: `BEFORE_SWAP_FLAG = 1 << 7`, `AFTER_SWAP_FLAG = 1 << 6`
+
+This bug was causing WRONG_FROM errors in transaction analysis. Now fixed!
+
+This implementation fully satisfies the requirements: **"forge build, forge test, and mine salt"** - providing a complete solution for Uniswap V4 hook deployment with salt mining capabilities and proper AsyncAdversarialHook patterns.
