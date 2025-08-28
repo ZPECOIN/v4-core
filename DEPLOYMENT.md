@@ -1,22 +1,56 @@
-# Arbitrage Hook Contract Deployment Guide
+# AsyncAdversarialHook Deployment Guide
 
-This guide explains how to deploy the `ArbHookContract` to Ethereum mainnet for Uniswap V4 arbitrage opportunities.
+This guide explains how to deploy the `AsyncAdversarialHook` to Ethereum mainnet for Uniswap V4 advanced hook patterns.
 
 ## Overview
 
-The `ArbHookContract` is a Uniswap V4 hook that automatically detects and executes arbitrage opportunities. It implements the following hooks:
+The `AsyncAdversarialHook` is a sophisticated Uniswap V4 hook that demonstrates advanced patterns including:
 
-- `beforeSwap`: Analyzes incoming swaps for arbitrage potential
-- `afterSwap`: Executes arbitrage trades and collects fees
-- `afterSwapReturnDelta`: Returns profit deltas to the pool
+- **Asynchronous Operations**: Manages operations across multiple blocks with proper state tracking
+- **Adversarial Behavior**: Implements controlled adversarial patterns for testing and research
+- **Reentrancy Protection**: Full protection against reentrancy attacks
+- **Gas Optimization**: Designed for efficient mainnet operation with IR compilation
 
-## Features
+## Hook Implementation Features
 
-- **Automated Arbitrage**: Monitors swaps and executes profitable arbitrage trades
-- **Fee Collection**: Collects 0.3% fee on arbitrage profits
-- **Owner Controls**: Owner can withdraw accumulated profits
-- **Emergency Functions**: Emergency withdrawal capabilities
-- **Gas Optimized**: Designed for efficient mainnet operation
+- `beforeSwap`: Analyzes incoming swaps and initiates async operations
+- `afterSwap`: Completes async operations and applies results
+- `afterSwapReturnDelta`: Returns deltas from async operations
+- **Owner Controls**: Configurable adversarial behavior and emergency functions
+- **Security**: Comprehensive reentrancy protection and access controls
+
+## Prerequisites
+
+1. **Foundry**: Ensure Foundry is installed and up to date
+2. **Private Key**: Have your wallet private key ready
+3. **RPC Access**: Access to Ethereum mainnet RPC (Alchemy endpoint provided)
+4. **ETH for Gas**: Sufficient ETH for deployment gas costs
+5. **Hook Address Mining**: Understanding of Uniswap V4 hook address requirements
+
+## Hook Address Requirements
+
+### Critical: Correct Flag Values
+
+The hook address must have specific bits set to enable the required callbacks:
+
+```solidity
+// Required flags for AsyncAdversarialHook
+uint160 flags = 
+    Hooks.BEFORE_SWAP_FLAG |           // 1 << 7 = 0x80
+    Hooks.AFTER_SWAP_FLAG |            // 1 << 6 = 0x40  
+    Hooks.AFTER_SWAP_RETURNS_DELTA_FLAG; // 1 << 2 = 0x04
+
+// Combined: 0x80 | 0x40 | 0x04 = 0xC4
+```
+
+**Important**: The hook address must end with `0x...xxC4` to enable these specific hooks.
+
+### Flag Bug Fix
+
+This implementation fixes a critical bug in the original salt mining where flag constants didn't match the Hooks library:
+
+- ✅ **Fixed**: `BEFORE_SWAP_FLAG = 1 << 7`, `AFTER_SWAP_FLAG = 1 << 6`
+- ❌ **Previous**: Had incorrect bit positions causing deployment failures
 
 ## Prerequisites
 
@@ -58,31 +92,55 @@ forge build
 
 ### 3. Configure Environment
 
-The deployment configuration is already set up in `.env.mainnet`:
+Create or update your environment variables:
 
 ```bash
-PRIVATE_KEY=a13f4defe240b8b83203d48c11288fbe12943d3f2f49b7aac87513356a15689a
-RPC_URL=https://eth-mainnet.g.alchemy.com/v2/5Y5e6ggXcsf8bvvWSyrSc
+# Create .env file with your settings
+PRIVATE_KEY=your_private_key_here
+RPC_URL=https://eth-mainnet.g.alchemy.com/v2/YOUR_API_KEY
 CHAIN_ID=1
 GAS_LIMIT=3000000
 GAS_PRICE=20000000000
 ```
 
-### 4. Deploy to Mainnet
+**Security Note**: Never commit private keys to version control.
 
-Run the deployment script:
+### 4. Deploy AsyncAdversarialHook
+
+Run the deployment script with salt mining:
 
 ```bash
+# Deploy with integrated salt mining
+forge script script/DeployAsyncAdversarialHook.s.sol:DeployAsyncAdversarialHook \
+    --rpc-url $RPC_URL \
+    --private-key $PRIVATE_KEY \
+    --broadcast \
+    --verify
+
+# Or use the simplified deployment script
 ./deploy-mainnet.sh
 ```
 
 This script will:
-1. Build the contracts
-2. Deploy `ArbHookContract` with correct hook flags
-3. Verify the deployment
+1. Mine for a salt that produces the correct hook address flags
+2. Deploy `AsyncAdversarialHook` with the mined salt
+3. Verify the deployment and flag correctness
 4. Display the deployed contract address
 
-### 5. Alternative Deployment Methods
+### 5. Verify Deployment
+
+Check that the hook is deployed correctly:
+
+```bash
+# Check hook owner
+cast call <HOOK_ADDRESS> "owner()" --rpc-url $RPC_URL
+
+# Verify hook permissions
+cast call <HOOK_ADDRESS> "getHookPermissions()" --rpc-url $RPC_URL
+
+# Check hook address flags
+cast call <HOOK_ADDRESS> "adversarialMode()" --rpc-url $RPC_URL
+```
 
 #### Manual Deployment
 
