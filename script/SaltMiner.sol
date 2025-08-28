@@ -9,22 +9,28 @@ import "forge-std/console.sol";
 /// @dev This is a standalone version that can be used to find salts for CREATE2 deployments
 contract SaltMiner is Script {
     /// @notice Hook flag constants (from Uniswap V4 Hooks library)
-    uint160 public constant BEFORE_INITIALIZE_FLAG = 1 << 14;
-    uint160 public constant AFTER_INITIALIZE_FLAG = 1 << 13;
-    uint160 public constant BEFORE_ADD_LIQUIDITY_FLAG = 1 << 12;
-    uint160 public constant AFTER_ADD_LIQUIDITY_FLAG = 1 << 11;
-    uint160 public constant BEFORE_REMOVE_LIQUIDITY_FLAG = 1 << 10;
-    uint160 public constant AFTER_REMOVE_LIQUIDITY_FLAG = 1 << 9;
-    uint160 public constant BEFORE_SWAP_FLAG = 1 << 8;
-    uint160 public constant AFTER_SWAP_FLAG = 1 << 7;
-    uint160 public constant BEFORE_DONATE_FLAG = 1 << 6;
-    uint160 public constant AFTER_DONATE_FLAG = 1 << 5;
-    uint160 public constant BEFORE_SWAP_RETURNS_DELTA_FLAG = 1 << 4;
-    uint160 public constant AFTER_SWAP_RETURNS_DELTA_FLAG = 1 << 3;
-    uint160 public constant AFTER_ADD_LIQUIDITY_RETURNS_DELTA_FLAG = 1 << 2;
-    uint160 public constant AFTER_REMOVE_LIQUIDITY_RETURNS_DELTA_FLAG = 1 << 1;
-    
-    uint160 public constant ALL_HOOK_MASK = (1 << 15) - 1; // 0x7FFF
+    /// @dev These MUST match the values in src/libraries/Hooks.sol exactly
+    uint160 public constant ALL_HOOK_MASK = uint160((1 << 14) - 1);
+
+    uint160 public constant BEFORE_INITIALIZE_FLAG = 1 << 13;
+    uint160 public constant AFTER_INITIALIZE_FLAG = 1 << 12;
+
+    uint160 public constant BEFORE_ADD_LIQUIDITY_FLAG = 1 << 11;
+    uint160 public constant AFTER_ADD_LIQUIDITY_FLAG = 1 << 10;
+
+    uint160 public constant BEFORE_REMOVE_LIQUIDITY_FLAG = 1 << 9;
+    uint160 public constant AFTER_REMOVE_LIQUIDITY_FLAG = 1 << 8;
+
+    uint160 public constant BEFORE_SWAP_FLAG = 1 << 7;
+    uint160 public constant AFTER_SWAP_FLAG = 1 << 6;
+
+    uint160 public constant BEFORE_DONATE_FLAG = 1 << 5;
+    uint160 public constant AFTER_DONATE_FLAG = 1 << 4;
+
+    uint160 public constant BEFORE_SWAP_RETURNS_DELTA_FLAG = 1 << 3;
+    uint160 public constant AFTER_SWAP_RETURNS_DELTA_FLAG = 1 << 2;
+    uint160 public constant AFTER_ADD_LIQUIDITY_RETURNS_DELTA_FLAG = 1 << 1;
+    uint160 public constant AFTER_REMOVE_LIQUIDITY_RETURNS_DELTA_FLAG = 1 << 0;
 
     /// @notice Mine for a salt that produces the desired hook flags
     /// @param deployer The deployer address
@@ -86,6 +92,28 @@ contract SaltMiner is Script {
         console.log("- AFTER_SWAP_FLAG:", AFTER_SWAP_FLAG);
         console.log("- AFTER_SWAP_RETURNS_DELTA_FLAG:", AFTER_SWAP_RETURNS_DELTA_FLAG);
         console.log("- Combined target:", targetFlags);
+        
+        return mineSalt(deployer, targetFlags, contractBytecodeHash, 1000000);
+    }
+
+    /// @notice Mine salt for AsyncAdversarialHook flags specifically
+    /// @param deployer The deployer address
+    /// @param contractBytecodeHash The contract bytecode hash
+    /// @return salt The mined salt
+    function mineAsyncAdversarialHookSalt(
+        address deployer,
+        bytes32 contractBytecodeHash
+    ) public pure returns (uint256 salt) {
+        // Target flags for AsyncAdversarialHook: beforeSwap + afterSwap + afterSwapReturnsDelta
+        uint160 targetFlags = BEFORE_SWAP_FLAG | AFTER_SWAP_FLAG | AFTER_SWAP_RETURNS_DELTA_FLAG;
+        
+        console.log("Mining salt for AsyncAdversarialHook");
+        console.log("Target flags breakdown:");
+        console.log("- BEFORE_SWAP_FLAG (1 << 7):", BEFORE_SWAP_FLAG);
+        console.log("- AFTER_SWAP_FLAG (1 << 6):", AFTER_SWAP_FLAG);
+        console.log("- AFTER_SWAP_RETURNS_DELTA_FLAG (1 << 2):", AFTER_SWAP_RETURNS_DELTA_FLAG);
+        console.log("- Combined target:", targetFlags);
+        console.log("- Target flags (hex):", vm.toString(abi.encodePacked(targetFlags)));
         
         return mineSalt(deployer, targetFlags, contractBytecodeHash, 1000000);
     }
